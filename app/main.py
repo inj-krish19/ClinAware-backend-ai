@@ -7,27 +7,9 @@ from sklearn.preprocessing import LabelEncoder
 app = Flask(__name__)
 encoder = LabelEncoder()
 
-model = joblib.load('notebooks/model.pkl')
-scaler = joblib.load('notebooks/scaler.pkl')
-encoder = joblib.load('notebooks/encoder.pkl')
+model = joblib.load('models/model.pkl')
+regressor = joblib.load('models/regressor.pkl')
 
-
-gender_map = {
-    "female": 0,
-    "male": 1
-}
-
-smoker_map = {
-    "no": 0,
-    "yes": 1
-}
-
-region_map = {
-    "northeast": 0,
-    "northwest": 1,
-    "southeast": 2,
-    "southwest": 3
-}
 
 
 @app.route("/")
@@ -114,13 +96,22 @@ def predict():
     # cost = np.array(cost).flatten()[0]
     # print("Cost", cost)
 
-    input_df = pd.DataFrame([body])
-    cost = model.predict(input_df).flatten()[0]
+    input_df = pd.DataFrame([{
+        "age": age, "bmi": bmi, "children": children, 
+        "sex": sex, "smoker": smoker, "region": region
+    }])
+    print(input_df)
+
+    cost_model = model.predict(input_df).flatten()[0]
+    cost_regressor = regressor.predict(input_df).flatten()[0]
 
     return jsonify({
         "code": 200,
         "status": "OK",
-        "cost": cost
+        "cost": {
+            "model": cost_model,
+            "regressor": cost_regressor
+        }
     })
 
 
