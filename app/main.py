@@ -112,7 +112,7 @@ def predict():
         "cost": {
             "model": cost_model,
             "regressor": cost_regressor
-        }
+        },
     })
 
 
