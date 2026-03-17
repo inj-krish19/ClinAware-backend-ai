@@ -2,6 +2,7 @@ import joblib
 import numpy as np
 import pandas as pd
 from flask import Flask, jsonify, request
+from flask_cors import CORS
 from sklearn.preprocessing import LabelEncoder
 
 app = Flask(__name__)
@@ -10,7 +11,7 @@ encoder = LabelEncoder()
 model = joblib.load('models/model.pkl')
 regressor = joblib.load('models/regressor.pkl')
 
-
+CORS(app)
 
 @app.route("/")
 def root():
@@ -21,7 +22,7 @@ def root():
     })
 
 
-@app.route("/predict")
+@app.route("/predict", methods=['POST'])
 def predict():
 
     if request.content_type != "application/json":
@@ -48,12 +49,12 @@ def predict():
             "message": "Please provide all details"
         }), 400
     
-    if age <= 0 or bmi <= 0 or children < 0:
-        return jsonify({
-            "code": 400, 
-            "status": "Bad Request",
-            "message": "Age, BMI and Children count should not be negative"
-        }), 400
+    # if age <= 0 or bmi <= 0 or children < 0:
+    #     return jsonify({
+    #         "code": 400, 
+    #         "status": "Bad Request",
+    #         "message": "Age, BMI and Children count should not be negative"
+    #     }), 400
     
     age = int(age)
     bmi = float(bmi)
