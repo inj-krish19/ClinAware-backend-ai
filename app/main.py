@@ -1,10 +1,12 @@
-import joblib
+import joblib, os
 import numpy as np
 import pandas as pd
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from sklearn.preprocessing import LabelEncoder
+from dotenv import load_dotenv
 
+load_dotenv()
 app = Flask(__name__)
 encoder = LabelEncoder()
 
@@ -12,6 +14,9 @@ model = joblib.load('models/model.pkl')
 nn_model = joblib.load('models/nn.pkl')
 regressor = joblib.load('models/regressor.pkl')
 
+PORT = int( os.getenv("PORT") or 12000 )
+print(PORT)
+ 
 CORS(app)
 
 @app.route("/")
@@ -120,4 +125,4 @@ def predict():
 
 
 if __name__ == "__main__":
-    app.run(port=12000, debug=True)
+    app.run(port=PORT, debug=True)
