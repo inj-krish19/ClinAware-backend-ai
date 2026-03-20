@@ -11,7 +11,7 @@ app = Flask(__name__)
 encoder = LabelEncoder()
 
 model = joblib.load('models/model.pkl')
-# nn_model = joblib.load('models/nn.pkl')
+nn_model = joblib.load('models/nn.pkl')
 regressor = joblib.load('models/regressor.pkl')
 
 PORT = int( os.getenv("PORT") or 12000 )
@@ -109,7 +109,7 @@ def predict():
     }])
     print(input_df)
 
-    # cost_nn = nn_model.predict(input_df).flatten()[0]
+    cost_nn = nn_model.predict(input_df).flatten()[0]
     cost_model = model.predict(input_df).flatten()[0]
     cost_regressor = regressor.predict(input_df).flatten()[0]
 
@@ -117,7 +117,7 @@ def predict():
         "code": 200,
         "status": "OK",
         "cost": {
-            # "nn": float(cost_nn),
+            "nn": float(cost_nn),
             "model": float(cost_model),
             "regressor":  float(cost_regressor)
         },
