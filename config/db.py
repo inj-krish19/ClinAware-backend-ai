@@ -33,7 +33,7 @@ certificate = {
 
 
 
-cred = credentials.Certificate("serviceAccountKey.json")
+cred = credentials.Certificate(certificate)
 firebase_admin.initialize_app(cred)
 
 db = firestore.client()
