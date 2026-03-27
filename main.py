@@ -6,18 +6,23 @@ from flask_cors import CORS
 from sklearn.preprocessing import LabelEncoder
 from dotenv import load_dotenv
 
+from app.automation import app as automation_blueprint
+from app.routes.user import app as user_blueprint
+
 load_dotenv()
 app = Flask(__name__)
 encoder = LabelEncoder()
 
 model = joblib.load('models/model.pkl')
-nn_model = joblib.load('models/nn.pkl')
+# nn_model = joblib.load('models/nn.pkl')
 regressor = joblib.load('models/regressor.pkl')
 
 PORT = int( os.getenv("PORT") or 12000 )
-print(PORT)
- 
+
+
 CORS(app)
+app.register_blueprint(automation_blueprint)
+app.register_blueprint(user_blueprint)
 
 @app.route("/")
 def root():
@@ -40,13 +45,13 @@ def predict():
 
     body = request.get_json()
 
-    age = body['age']
-    sex = body['sex']
-    bmi = body['bmi']
+    age = body['age'] or 0
+    sex = body['sex'] or "not disclosed"
+    bmi = body['bmi'] or 0
 
-    region = body['region']
-    smoker = body['smoker']
-    children = body['children']
+    region = body['region'] or "northeast"
+    smoker = body['smoker'] or "smoker"
+    children = body['children'] or 0
 
     if not (age or sex or bmi or region or smoker or children):
         return jsonify({
@@ -109,7 +114,7 @@ def predict():
     }])
     print(input_df)
 
-    cost_nn = nn_model.predict(input_df).flatten()[0]
+    # cost_nn = nn_model.predict(input_df).flatten()[0]
     cost_model = model.predict(input_df).flatten()[0]
     cost_regressor = regressor.predict(input_df).flatten()[0]
 
@@ -117,7 +122,7 @@ def predict():
         "code": 200,
         "status": "OK",
         "cost": {
-            "nn": float(cost_nn),
+            # "nn": float(cost_nn),
             "model": float(cost_model),
             "regressor":  float(cost_regressor)
         },
