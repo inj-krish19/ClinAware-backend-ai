@@ -8,21 +8,22 @@ from dotenv import load_dotenv
 
 from app.automation import app as automation_blueprint
 from app.routes.user import app as user_blueprint
+from app.routes.auth import app as auth_blueprint
 
 load_dotenv()
 app = Flask(__name__)
 encoder = LabelEncoder()
 
 model = joblib.load('models/model.pkl')
-# nn_model = joblib.load('models/nn.pkl')
 regressor = joblib.load('models/regressor.pkl')
 
-PORT = int( os.getenv("PORT") or 12000 )
+PORT = int( os.getenv("PORT", 12000) )
 
 
 CORS(app)
-app.register_blueprint(automation_blueprint)
+app.register_blueprint(auth_blueprint)
 app.register_blueprint(user_blueprint)
+app.register_blueprint(automation_blueprint)
 
 @app.route("/")
 def root():
@@ -96,6 +97,8 @@ def predict():
     smoker = smoker.lower()
     region = region.lower()
 
+    nn_model = joblib.load('models/nn.pkl')
+
     # sex = gender_map[sex]
     # smoker = smoker_map[smoker]
     # region = region_map[region]
@@ -114,7 +117,7 @@ def predict():
     }])
     print(input_df)
 
-    # cost_nn = nn_model.predict(input_df).flatten()[0]
+    cost_nn = nn_model.predict(input_df).flatten()[0]
     cost_model = model.predict(input_df).flatten()[0]
     cost_regressor = regressor.predict(input_df).flatten()[0]
 
@@ -122,9 +125,9 @@ def predict():
         "code": 200,
         "status": "OK",
         "cost": {
-            # "nn": float(cost_nn),
-            "model": float(cost_model),
-            "regressor":  float(cost_regressor)
+            "nn": float(round(cost_nn // 12, -2)),
+            "model": float(round(cost_model // 12, -2)),
+            "regressor":  float(round(cost_regressor // 12, -2))
         },
     })
 
