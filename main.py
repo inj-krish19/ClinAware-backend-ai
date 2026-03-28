@@ -18,9 +18,10 @@ model = joblib.load('models/model.pkl')
 regressor = joblib.load('models/regressor.pkl')
 
 PORT = int( os.getenv("PORT", 12000) )
+FRONTEND_URL = os.getenv("FRONTEND_URL", "")
 
 
-CORS(app)
+CORS(app, origins=[FRONTEND_URL], supports_credentials=True)
 app.register_blueprint(auth_blueprint)
 app.register_blueprint(user_blueprint)
 app.register_blueprint(automation_blueprint)

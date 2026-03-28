@@ -37,4 +37,13 @@ cred = credentials.Certificate(certificate)
 firebase_admin.initialize_app(cred)
 
 db = firestore.client()
+
+# Storing User information
 User = db.collection('users')
+
+# Stroring News Automation Posts
+Posts = db.collection('posts')
+
+# Storing Prediction History of Medical Insurance
+Insurance = db.collection('insurance')
+
