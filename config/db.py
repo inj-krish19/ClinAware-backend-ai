@@ -39,10 +39,10 @@ firebase_admin.initialize_app(cred)
 db = firestore.client()
 
 # Storing User information
-User = db.collection('users')
+User = db.collection('user')
 
 # Stroring News Automation Posts
-Posts = db.collection('posts')
+Post = db.collection('post')
 
 # Storing Prediction History of Medical Insurance
 Insurance = db.collection('insurance')

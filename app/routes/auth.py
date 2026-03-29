@@ -39,7 +39,6 @@ def get_me():
         })
     
     payload = verify_token(token)
-    print(payload.keys())
 
     if "message" in payload.keys():
         return jsonify({
@@ -52,8 +51,6 @@ def get_me():
     expiry = datetime.fromtimestamp(payload['exp'])
     current = datetime.now()
 
-    print(expiry, current)
-
     if not expiry > current:
         return jsonify({
             "code": 200,
@@ -62,6 +59,8 @@ def get_me():
             "message": "Token has been expired"
         })
     
+    # print("User is authenticated")
+
     return jsonify({
         "code": 200,
         "status": "OK",
@@ -126,11 +125,8 @@ def signin():
             "message": "Account does not exist"
         }), 400
 
-    print(record)
-
     email = record['email']
     id = record['id']
-    hash_password = record['password']
 
     token = generate_token(email, id)
     User.document(id).update({
@@ -169,9 +165,6 @@ def create_user():
     fields = ['name', 'email', 'password']
 
     available_fields = list(body.keys())
-
-    print(fields)
-    print(available_fields)
 
     for field in fields:
         if field not in available_fields:
@@ -248,8 +241,6 @@ def oauth_login():
         "authorization": f"Bearer {token}"
     })
     data = res.json()
-
-    print(data)
 
     name = data['name']
     email = data['email']
