@@ -6,9 +6,10 @@ from flask_cors import CORS
 from sklearn.preprocessing import LabelEncoder
 from dotenv import load_dotenv
 
-from routes.automation import app as automation_blueprint
 from routes.user import app as user_blueprint
 from routes.auth import app as auth_blueprint
+from routes.analysis import app as analysis_blueprint
+from routes.automation import app as automation_blueprint
 
 load_dotenv()
 app = Flask(__name__)
@@ -24,6 +25,7 @@ FRONTEND_URL = os.getenv("FRONTEND_URL", "")
 CORS(app, origins=[FRONTEND_URL], supports_credentials=True)
 app.register_blueprint(auth_blueprint)
 app.register_blueprint(user_blueprint)
+app.register_blueprint(analysis_blueprint)
 app.register_blueprint(automation_blueprint)
 
 @app.route("/")
