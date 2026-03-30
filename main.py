@@ -6,9 +6,9 @@ from flask_cors import CORS
 from sklearn.preprocessing import LabelEncoder
 from dotenv import load_dotenv
 
-from app.automation import app as automation_blueprint
-from app.routes.user import app as user_blueprint
-from app.routes.auth import app as auth_blueprint
+from routes.automation import app as automation_blueprint
+from routes.user import app as user_blueprint
+from routes.auth import app as auth_blueprint
 
 load_dotenv()
 app = Flask(__name__)
