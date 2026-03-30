@@ -163,7 +163,7 @@ nonsmoker_age_groups = list(smoker_stats.keys())
 
 
 @app.route("/nonsmoker-age-avg-premium-yearly")
-def smoker_age_average_premium_yearly():
+def nonsmoker_age_average_premium_yearly():
     return jsonify({
         "code": 200,
         "status": "OK",
@@ -173,10 +173,57 @@ def smoker_age_average_premium_yearly():
 
 
 @app.route("/nonsmoker-age-avg-premium-monthly")
-def smoker_age_average_premium_monthly():
+def nonsmoker_age_average_premium_monthly():
     return jsonify({
         "code": 200,
         "status": "OK",
         "age": nonsmoker_age_groups,
         "premium": list(nonsmoker_monthly)
+    })
+
+
+region_avg_premium = df.groupby(by=['region'])['charges'].mean()
+region_age_groups = list(region_avg_premium.index)
+region_premium = [ round(premium, -2) for premium in region_avg_premium.values ]
+
+@app.route("/region-avg-premium")
+def region_average_premium():
+
+    return jsonify({
+        "code": 200,
+        "status": "OK",
+        "age": region_age_groups,
+        "premium": region_premium
+    })
+
+
+region_average_premium = df.groupby(by=['smoker', 'region'])['charges'].mean()
+
+smoker_premium = region_average_premium['yes']
+nonsmoker_premium = region_average_premium['no']
+
+smoker_age_groups = list(smoker_premium.index)
+smoker_avg_premium = [ round(premium, -2) for premium in smoker_premium.values ]
+
+@app.route("/smoker-region-avg-premium")
+def region_smoker_average_premium():
+
+    return jsonify({
+        "code": 200,
+        "status": "OK",
+        "age": smoker_age_groups,
+        "premium": smoker_avg_premium
+    })
+
+nonsmoker_age_groups = list(nonsmoker_premium.index)
+nonsmoker_avg_premium = [ round(premium, -2) for premium in nonsmoker_premium.values ]
+
+@app.route("/nonsmoker-region-avg-premium")
+def region_nonsmoker_average_premium():
+
+    return jsonify({
+        "code": 200,
+        "status": "OK",
+        "age": nonsmoker_age_groups,
+        "premium": nonsmoker_avg_premium
     })
