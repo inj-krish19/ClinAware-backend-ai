@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from flask import Blueprint, request, make_response, jsonify, redirect
 from dotenv import load_dotenv
 from config.db import User
-from config.token import generate_token, verify_token
+from config.token import generate_token, verify_token, validate_token
 from config.hash import generate_hash, verify_hash
 
 load_dotenv()
@@ -187,6 +187,17 @@ def create_user():
             "message": "Details should not be empty"
         }), 400
     
+    query = User.where("email", "==", email).limit(1)
+    records = query.stream()
+    records = [ user.to_dict() for user in records ]
+
+    if len(records) != 0:
+        return jsonify({
+            "code": 403,
+            "status": "Forbidden",
+            "message": "Account already exist. Please signin"
+        }), 403
+
     password = generate_hash(password)
     document = User.add({
         'name': name, 'email': email, 'password': password, 'token': token
@@ -231,7 +242,7 @@ def oauth_login():
     body = res.json()
 
     if res.status_code != 200:
-        print(data)
+        print(body)
         return redirect(f"{FRONTEND_URL}/failure")
 
     token = body['access_token']
@@ -245,13 +256,22 @@ def oauth_login():
     name = data['name']
     email = data['email']
 
-    document = User.add({
-        'name': name, 'email': email, 'password': "not_necessary"
-    })
+    query = User.where("email", "==", email).limit(1)
+    records = query.stream()
+    records = [ user.to_dict() for user in records ]
 
-    id = document[1].id
+    if len(records) == 0:
+        document = User.add({
+            'name': name, 'email': email, 'password': "not_necessary"
+        })
+        id = document[1].id
+    else:
+        for record in query.stream():
+            id = record.id
+            break
+
+
     token = generate_token(email, id)
-
     User.document(id).update({
         'token': token
     })
@@ -263,5 +283,34 @@ def oauth_login():
         secure=False,         
         max_age=30*24*60*60
     )
+
+    return response
+
+
+@app.route("/logout", methods=['POST'])
+def logout():
+
+    authenticated = validate_token(request)
+    if not authenticated:
+        return jsonify({
+            "code": 403,
+            "status": "Forbidden",
+            "message": "Please signin"
+        })
+
+    token = request.cookies.get("token")
+    payload = verify_token(token)
+    id = payload['id']
+
+    User.document(id).update({
+        "token": ""
+    })
+
+    response = make_response(jsonify({
+        "code": 200,
+        "status": "OK",
+        "message": "Logout successfully"
+    }))
+    response.delete_cookie("token")
 
     return response
