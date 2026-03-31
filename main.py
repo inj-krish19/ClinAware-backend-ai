@@ -53,9 +53,7 @@ def predict():
         }), 403
     
     token = request.cookies.get("token") or ""
-    print(token)
     payload = verify_token(token)
-    print(payload)
 
     if "message" in payload.keys():
         return jsonify({

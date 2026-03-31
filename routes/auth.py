@@ -30,6 +30,8 @@ def index():
 def get_me():
 
     token = request.cookies.get('token') or ""
+    print(token)
+
     if not token:
         return jsonify({
             "code": 200,
@@ -39,6 +41,7 @@ def get_me():
         })
     
     payload = verify_token(token)
+    print(payload)
 
     if "message" in payload.keys():
         return jsonify({
