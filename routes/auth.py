@@ -59,7 +59,7 @@ def get_me():
             "message": "Token has been expired"
         })
     
-    # print("User is authenticated")
+    print("User is authenticated")
 
     return jsonify({
         "code": 200,

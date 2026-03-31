@@ -11,6 +11,8 @@ from routes.auth import app as auth_blueprint
 from routes.reports import app as report_blueprint
 from routes.analysis import app as analysis_blueprint
 from routes.automation import app as automation_blueprint
+from config.token import validate_token, verify_token
+from config.db import Insurance
 
 load_dotenv()
 app = Flask(__name__)
@@ -42,6 +44,28 @@ def root():
 @app.route("/predict", methods=['POST'])
 def predict():
 
+    authenticated = validate_token(request)
+    if not authenticated: 
+        return jsonify({
+            "code": 403,
+            "status": "Forbidden",
+            "message": "Please Sign In"
+        }), 403
+    
+    token = request.cookies.get("token") or ""
+    print(token)
+    payload = verify_token(token)
+    print(payload)
+
+    if "message" in payload.keys():
+        return jsonify({
+            "code": 403,
+            "status": "Forbidden",
+            "message": "Please Sign In. Token not found"
+        }), 403
+
+    id = payload['id']
+
     if request.content_type != "application/json":
         return jsonify({
             "code": 403,
@@ -50,6 +74,7 @@ def predict():
         }), 403
 
     body = request.get_json()
+    name = body['name'] or ""
 
     age = body['age'] or 0
     sex = body['sex'] or "not disclosed"
@@ -59,7 +84,7 @@ def predict():
     smoker = body['smoker'] or "smoker"
     children = body['children'] or 0
 
-    if not (age or sex or bmi or region or smoker or children):
+    if not (age or sex or bmi or region or smoker or children or name):
         return jsonify({
             "code": 400,
             "status": "Bad Request",
@@ -117,10 +142,17 @@ def predict():
     # print("Cost", cost)
 
     input_df = pd.DataFrame([{
+        "user": id, "name": name,
         "age": age, "bmi": bmi, "children": children, 
         "sex": sex, "smoker": smoker, "region": region
     }])
     print(input_df)
+
+    Insurance.add({
+        "age": age, "bmi": bmi, "children": children, 
+        "sex": sex, "smoker": smoker, "region": region,
+        "user": id, "name": name
+    })
 
     cost_nn = nn_model.predict(input_df).flatten()[0]
     cost_model = model.predict(input_df).flatten()[0]
