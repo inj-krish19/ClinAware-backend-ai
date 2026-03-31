@@ -146,8 +146,8 @@ def signin():
 
     response.set_cookie("token", token, 
         httponly=True,        
-        samesite='Lax',       
-        secure=False,         
+        samesite='None',       
+        secure=True,         
         max_age=30*24*60*60
     )
 
@@ -221,8 +221,8 @@ def create_user():
 
     response.set_cookie("token", token, 
         httponly=True,        
-        samesite='Lax',       
-        secure=False,         
+        samesite='None',       
+        secure=True,         
         max_age=30*24*60*60
     )
 
@@ -282,8 +282,8 @@ def oauth_login():
     response = redirect(f"{FRONTEND_URL}/success")
     response.set_cookie("token", token, 
         httponly=True,        
-        samesite='Lax',       
-        secure=False,         
+        samesite='None',       
+        secure=True,         
         max_age=30*24*60*60
     )
 
