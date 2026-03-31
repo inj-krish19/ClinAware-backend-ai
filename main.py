@@ -46,6 +46,7 @@ def predict():
 
     authenticated = validate_token(request)
     if not authenticated: 
+        print("Auth Fail")
         return jsonify({
             "code": 403,
             "status": "Forbidden",
@@ -56,6 +57,7 @@ def predict():
     payload = verify_token(token)
 
     if "message" in payload.keys():
+        print("Keys fail")
         return jsonify({
             "code": 403,
             "status": "Forbidden",

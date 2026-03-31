@@ -41,14 +41,15 @@ def validate_token(request):
     user = User.document(id).get()
 
     if user.exists:
-        print("Document found!")
-        print("Data:", user.to_dict())
+        # print("Document found!")
+        # print("Data:", user.to_dict())
         user = user.to_dict()
     else:
-        print("Document does not exist")
+        # print("Document does not exist")
         return False
 
 
+    # print("T", token, "U", user['token'])
     if token != user['token']:
         return False
 

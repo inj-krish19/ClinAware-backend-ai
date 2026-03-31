@@ -29,37 +29,14 @@ def index():
 @app.route("/me", methods=['POST'])
 def get_me():
 
-    token = request.cookies.get('token') or ""
-    print(token)
+    authenticated = validate_token(request)
 
-    if not token:
+    if not authenticated:
         return jsonify({
             "code": 200,
             "status": "OK",
             "authenticated": False,
-            "message": 'Please signin. Token not found'
-        })
-    
-    payload = verify_token(token)
-    print(payload)
-
-    if "message" in payload.keys():
-        return jsonify({
-            "code": 200,
-            "status": "OK",
-            "authenticated": False,
-            "message": "Please signin"
-        })
-
-    expiry = datetime.fromtimestamp(payload['exp'])
-    current = datetime.now()
-
-    if not expiry > current:
-        return jsonify({
-            "code": 200,
-            "status": "OK",
-            "authenticated": False,
-            "message": "Token has been expired"
+            "message": 'Validation failed'
         })
     
     print("User is authenticated")
