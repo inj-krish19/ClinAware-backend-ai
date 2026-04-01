@@ -229,7 +229,7 @@ def post_news():
         'image': news['image'],
         'source': news['source']['name'] or "Not Disclosable Provider",
         'url': news['url'],
-        'platform_url': f"https://www.linkedin.com/feed/update/{post_id.replace("share", "activity")}" or post_id
+        'platform_url': f"https://www.linkedin.com/feed/update/{post_id}" or post_id
     })
 
     return jsonify({
