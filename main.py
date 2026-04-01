@@ -10,6 +10,7 @@ from routes.user import app as user_blueprint
 from routes.auth import app as auth_blueprint
 from routes.reports import app as report_blueprint
 from routes.analysis import app as analysis_blueprint
+from routes.insurance import app as insurance_blueprint
 from routes.automation import app as automation_blueprint
 from config.token import validate_token, verify_token
 from config.db import Insurance
@@ -30,6 +31,7 @@ app.register_blueprint(auth_blueprint)
 app.register_blueprint(user_blueprint)
 app.register_blueprint(report_blueprint)
 app.register_blueprint(analysis_blueprint)
+app.register_blueprint(insurance_blueprint)
 app.register_blueprint(automation_blueprint)
 
 @app.route("/")
@@ -148,15 +150,19 @@ def predict():
     }])
     print(input_df)
 
-    Insurance.add({
-        "age": age, "bmi": bmi, "children": children, 
-        "sex": sex, "smoker": smoker, "region": region,
-        "user": id, "name": name
-    })
-
     cost_nn = nn_model.predict(input_df).flatten()[0]
     cost_model = model.predict(input_df).flatten()[0]
     cost_regressor = regressor.predict(input_df).flatten()[0]
+
+    Insurance.add({
+        "age": age, "bmi": bmi, "children": children, 
+        "sex": sex, "smoker": smoker, "region": region,
+        "user": id, "name": name, "predictions": {
+            "nn": float(round(cost_nn // 12, -2)),
+            "model": float(round(cost_model // 12, -2)),
+            "regressor":  float(round(cost_regressor // 12, -2))
+        }
+    })
 
     return jsonify({
         "code": 200,
