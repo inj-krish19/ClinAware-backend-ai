@@ -4,7 +4,7 @@ from datetime import datetime
 from flask import Flask, jsonify, request
 
 
-import firebase_admin, os
+import firebase_admin
 from firebase_admin import credentials, firestore
 from flask import request, jsonify
 load_dotenv()
@@ -47,7 +47,7 @@ Post = db.collection('post')
 app = Flask("Post routes")
 
 
-PORT = int( os.getenv("POST", "") or 12000)
+PORT = int( os.getenv("PORT", "") or 12000)
 ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "")
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "")
 
