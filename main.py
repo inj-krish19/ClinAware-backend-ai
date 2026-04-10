@@ -79,16 +79,17 @@ def predict():
 
     body = request.get_json()
     name = body['name'] or ""
+    income = body['income'] or 0
 
     age = body['age'] or 0
     sex = body['sex'] or "not disclosed"
     bmi = body['bmi'] or 0
 
     region = body['region'] or "northeast"
-    smoker = body['smoker'] or "smoker"
+    chronic_condition = body['chronic_condition'] or "chronic_condition"
     children = body['children'] or 0
 
-    if not (age or sex or bmi or region or smoker or children or name):
+    if not (age or sex or bmi or region or chronic_condition or children or name or income):
         return jsonify({
             "code": 400,
             "status": "Bad Request",
@@ -104,6 +105,7 @@ def predict():
     
     age = int(age)
     bmi = float(bmi)
+    income = float(income)
     children = int(children)
     
     if sex not in ["male", "female"]:
@@ -113,11 +115,11 @@ def predict():
             "message": "Sex should be me or female"
         }), 400
     
-    if smoker not in ["yes", "no"]:
+    if chronic_condition not in ["yes", "no"]:
         return jsonify({
             "code": 400,
             "status": "Bad Request",
-            "message": "Smoker selection should be from yes or no"
+            "message": "Chronic selection should be from yes or no. Please reheld it"
         }), 400
 
     if region not in ["northeast", "northwest", "southeast", "southwest"]:
@@ -128,27 +130,27 @@ def predict():
         }), 400
 
     sex = sex.lower()
-    smoker = smoker.lower()
+    chronic_condition = chronic_condition.lower()
     region = region.lower()
 
     nn_model = joblib.load('models/nn.pkl')
 
     # sex = gender_map[sex]
-    # smoker = smoker_map[smoker]
+    # chronic_condition = chronic_condition_map[chronic_condition]
     # region = region_map[region]
 
     # print("Numericals", age, bmi, children)
-    # print("Categorical", sex, smoker, region)
+    # print("Categorical", sex, chronic_condition, region)
 
-    # cost = model.predict(np.array([[age, sex, bmi, children, smoker, region]]) )
+    # cost = model.predict(np.array([[age, sex, bmi, children, chronic_condition, region]]) )
 
     # cost = np.array(cost).flatten()[0]
     # print("Cost", cost)
 
     input_df = pd.DataFrame([{
-        "user": id, "name": name,
+        "user": id, "name": name, 
         "age": age, "bmi": bmi, "children": children, 
-        "sex": sex, "smoker": smoker, "region": region
+        "sex": sex, "smoker": chronic_condition, "region": region
     }])
     print(input_df)
 
@@ -158,8 +160,8 @@ def predict():
 
     Insurance.add({
         "age": age, "bmi": bmi, "children": children, 
-        "sex": sex, "smoker": smoker, "region": region,
-        "user": id, "name": name, "predictions": {
+        "sex": sex, "chronic_condition": chronic_condition, "region": region,
+        "user": id, "name": name, "income": income, "predictions": {
             "nn": float(round(cost_nn // 12, -2)),
             "model": float(round(cost_model // 12, -2)),
             "regressor":  float(round(cost_regressor // 12, -2))

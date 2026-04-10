@@ -50,7 +50,8 @@ def validate_token(request):
 
 
     # print("T", token, "U", user['token'])
-    if token != user['token']:
-        return False
+    tokens = user['token'] or []
+    if token in tokens:
+        return True
 
-    return True
+    return False

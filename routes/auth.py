@@ -108,7 +108,10 @@ def signin():
     email = record['email']
     id = record['id']
 
-    token = generate_token(email, id)
+    auth_token = generate_token(email, id)
+    record['token'].append(auth_token)
+
+    token = record['token']
     User.document(id).update({
         'token': token
     })
@@ -121,7 +124,7 @@ def signin():
         "message": "Signed In successfully"
     }))
 
-    response.set_cookie("token", token, 
+    response.set_cookie("token", auth_token, 
         httponly=True,        
         samesite='None',       
         secure=True,         
@@ -158,7 +161,6 @@ def create_user():
     email = body['email'] or ''
 
     password = body['password'] or ''
-    token = "token_in_process"
 
     if not ( name or email or password ):
         return jsonify({
@@ -180,14 +182,14 @@ def create_user():
 
     password = generate_hash(password)
     document = User.add({
-        'name': name, 'email': email, 'password': password, 'token': token
+        'name': name, 'email': email, 'password': password, 'token': []
     })
 
     id = document[1].id
-    token = generate_token(email, id)
+    auth_token = generate_token(email, id)
     
     User.document(id).update({
-        'token': token
+        'token': [auth_token]
     })
 
     response = make_response(jsonify({
@@ -196,7 +198,7 @@ def create_user():
         "message": "Account created successfully"
     }))
 
-    response.set_cookie("token", token, 
+    response.set_cookie("token", auth_token, 
         httponly=True,        
         samesite='None',       
         secure=True,         
@@ -240,24 +242,28 @@ def oauth_login():
     records = query.stream()
     records = [ user.to_dict() for user in records ]
 
+    data = None
+    token = []
     if len(records) == 0:
         document = User.add({
-            'name': name, 'email': email, 'password': "not_necessary"
+            'name': name, 'email': email, 'password': "not_necessary", "token": []
         })
         id = document[1].id
     else:
         for record in query.stream():
             id = record.id
+            data = record.to_dict()
+            token = [] if data['token'] == None else data['token']
             break
 
-
-    token = generate_token(email, id)
+    auth_token = generate_token(email, id)
+    token.append(auth_token) 
     User.document(id).update({
         'token': token
     })
 
     response = redirect(f"{FRONTEND_URL}/success")
-    response.set_cookie("token", token, 
+    response.set_cookie("token", auth_token, 
         httponly=True,        
         samesite='None',       
         secure=True,         
@@ -283,7 +289,7 @@ def logout():
     id = payload['id']
 
     User.document(id).update({
-        "token": ""
+        "token": []
     })
 
     response = make_response(jsonify({

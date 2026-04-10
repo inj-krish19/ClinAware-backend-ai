@@ -57,19 +57,19 @@ def age_average_premium():
 
 
 
-# Smoker and Nonsmoker Analysis for Average Premium
-smoking_age_avg_premium = df.groupby(by=['smoker', 'age'])['charges'].sum()
-smoking_age_avg_count = df.groupby(by=['smoker', 'age'])['charges'].count()
+# Chronic Condition and Non Chronic Condition Analysis for Average Premium
+chroning_age_avg_premium = df.groupby(by=['smoker', 'age'])['charges'].sum()
+chroning_age_avg_count = df.groupby(by=['smoker', 'age'])['charges'].count()
 
-smoker_data_charge = smoking_age_avg_premium['yes']
-nonsmoker_data_charge = smoking_age_avg_premium['no']
+chronic_condition_data_charge = chroning_age_avg_premium['yes']
+nonchronic_condition_data_charge = chroning_age_avg_premium['no']
 
-smoker_data_count = smoking_age_avg_count['yes']
-nonsmoker_data_count = smoking_age_avg_count['no']
+chronic_condition_data_count = chroning_age_avg_count['yes']
+nonchronic_condition_data_count = chroning_age_avg_count['no']
 
 
 # SMOKER 
-smoker_stats = [
+chronic_condition_stats = [
     { 'age': '18-25', 'min': 18, 'max': 25 },
     { 'age': '26-33', 'min': 26, 'max': 33 },
     { 'age': '34-40', 'min': 33, 'max': 40 },
@@ -78,7 +78,7 @@ smoker_stats = [
     { 'age': '56-64', 'min': 56, 'max': 64 }
 ]
 
-for record in smoker_stats:
+for record in chronic_condition_stats:
 
     count = 0
     charge = 0
@@ -88,8 +88,8 @@ for record in smoker_stats:
     max_age = record['max']
 
     for age in range(min_age, max_age+1):
-        count += smoker_data_count[age]
-        charge += smoker_data_charge[age]
+        count += chronic_condition_data_count[age]
+        charge += chronic_condition_data_charge[age]
     
     record['count'] = int(count)
     record['total'] = float(round(charge))
@@ -98,17 +98,17 @@ for record in smoker_stats:
     record['monthly'] = float(round(record['yearly'] // 12, -2))
 
 
-@app.route("/smoker-age-avg-premium")
-def smoker_age_average_premium():
+@app.route("/chronic-age-avg-premium")
+def chronic_condition_age_average_premium():
     return jsonify({
         "code": 200,
         "status": "OK",
-        "data": smoker_stats
+        "data": chronic_condition_stats
     })
 
 
 # NON SMOKER
-nonsmoker_stats = [
+nonchronic_condition_stats = [
     { 'age': '18-25', 'min': 18, 'max': 25 },
     { 'age': '26-33', 'min': 26, 'max': 33 },
     { 'age': '34-40', 'min': 33, 'max': 40 },
@@ -117,7 +117,7 @@ nonsmoker_stats = [
     { 'age': '56-64', 'min': 56, 'max': 64 }
 ]
 
-for record in nonsmoker_stats:
+for record in nonchronic_condition_stats:
 
     count = 0
     charge = 0
@@ -127,8 +127,8 @@ for record in nonsmoker_stats:
     max_age = record['max']
 
     for age in range(min_age, max_age+1):
-        count += nonsmoker_data_count[age]
-        charge += nonsmoker_data_charge[age]
+        count += nonchronic_condition_data_count[age]
+        charge += nonchronic_condition_data_charge[age]
 
     record['count'] = int(count)
     record['total'] = float(round(charge))
@@ -137,8 +137,8 @@ for record in nonsmoker_stats:
     record['monthly'] = float(round(record['yearly'] // 12, -2))
 
 
-@app.route("/nonsmoker-age-avg-premium")
-def nonsmoker_age_average_premium():
+@app.route("/nonchronic-age-avg-premium")
+def nonchronic_condition_age_average_premium():
     return jsonify({
         "code": 200,
         "status": "OK",
@@ -170,45 +170,45 @@ def region_average_premium():
 
 
 # Smoker Region Average Premium
-smoker_region_stats = []
-smoking_region_avg_premium = df.groupby(by=['smoker', 'region'])['charges'].mean()
+chronic_condition_region_stats = []
+chroning_region_avg_premium = df.groupby(by=['smoker', 'region'])['charges'].mean()
 
-smoker_premium = smoking_region_avg_premium['yes']
-nonsmoker_premium = smoking_region_avg_premium['no']
+chronic_condition_premium = chroning_region_avg_premium['yes']
+nonchronic_condition_premium = chroning_region_avg_premium['no']
 
 
-for region in smoker_premium.index:
-    smoker_region_stats.append({ 
+for region in chronic_condition_premium.index:
+    chronic_condition_region_stats.append({ 
         'region': region, 
-        'yearly': round(smoker_premium[region], -2),
-        'monthly': round(smoker_premium[region] // 12, -2)
+        'yearly': round(chronic_condition_premium[region], -2),
+        'monthly': round(chronic_condition_premium[region] // 12, -2)
     }) 
 
-@app.route("/smoker-region-avg-premium")
-def region_smoker_average_premium():
+@app.route("/chronic-region-avg-premium")
+def region_chronic_condition_average_premium():
 
     return jsonify({
         "code": 200,
         "status": "OK",
-        "data": smoker_region_stats
+        "data": chronic_condition_region_stats
     })
 
 
 
-# Nonsmoker Region Average Premium
-nonsmoker_region_stats = []
-for region in nonsmoker_premium.index:
-    nonsmoker_region_stats.append({
+# Nonchronic_condition Region Average Premium
+nonchronic_condition_region_stats = []
+for region in nonchronic_condition_premium.index:
+    nonchronic_condition_region_stats.append({
         'region': region,
-        'yearly': round(nonsmoker_premium[region], -2),
-        'monthly': round(nonsmoker_premium[region] // 12, -2)
+        'yearly': round(nonchronic_condition_premium[region], -2),
+        'monthly': round(nonchronic_condition_premium[region] // 12, -2)
     })
 
-@app.route("/nonsmoker-region-avg-premium")
-def region_nonsmoker_average_premium():
+@app.route("/nonchronic-region-avg-premium")
+def region_nonchronic_condition_average_premium():
 
     return jsonify({
         "code": 200,
         "status": "OK",
-        "data": nonsmoker_region_stats
+        "data": nonchronic_condition_region_stats
     })
