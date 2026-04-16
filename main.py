@@ -133,7 +133,7 @@ def predict():
     chronic_condition = chronic_condition.lower()
     region = region.lower()
 
-    nn_model = joblib.load('models/nn.pkl')
+    # nn_model = joblib.load('models/nn.pkl')
 
     # sex = gender_map[sex]
     # chronic_condition = chronic_condition_map[chronic_condition]
@@ -154,7 +154,7 @@ def predict():
     }])
     print(input_df)
 
-    cost_nn = nn_model.predict(input_df).flatten()[0]
+    # cost_nn = nn_model.predict(input_df).flatten()[0]
     cost_model = model.predict(input_df).flatten()[0]
     cost_regressor = regressor.predict(input_df).flatten()[0]
 
@@ -162,7 +162,7 @@ def predict():
         "age": age, "bmi": bmi, "children": children, 
         "sex": sex, "chronic_condition": chronic_condition, "region": region,
         "user": id, "name": name, "income": income, "predictions": {
-            "nn": float(round(cost_nn // 12, -2)),
+            # "nn": float(round(cost_nn // 12, -2)),
             "model": float(round(cost_model // 12, -2)),
             "regressor":  float(round(cost_regressor // 12, -2))
         }
@@ -172,7 +172,7 @@ def predict():
         "code": 200,
         "status": "OK",
         "cost": {
-            "nn": float(round(cost_nn // 12, -2)),
+            # "nn": float(round(cost_nn // 12, -2)),
             "model": float(round(cost_model // 12, -2)),
             "regressor":  float(round(cost_regressor // 12, -2))
         },
