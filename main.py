@@ -9,12 +9,14 @@ from dotenv import load_dotenv
 from routes.auth import app as auth_blueprint
 from routes.user import app as user_blueprint
 from routes.post import app as post_blueprint
+
 from routes.reports import app as report_blueprint
 from routes.analysis import app as analysis_blueprint
 from routes.insurance import app as insurance_blueprint
 from routes.automation import app as automation_blueprint
-from config.token import validate_token, verify_token
+
 from config.db import Insurance
+from config.token import validate_token, verify_token
 
 load_dotenv()
 app = Flask(__name__)
