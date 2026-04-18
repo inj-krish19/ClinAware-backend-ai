@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 from routes.auth import app as auth_blueprint
 from routes.user import app as user_blueprint
 from routes.post import app as post_blueprint
+from routes.vitals import app as vitals_blueprint
 
 from routes.reports import app as report_blueprint
 from routes.analysis import app as analysis_blueprint
@@ -33,6 +34,7 @@ CORS(app, origins=[FRONTEND_URL], supports_credentials=True)
 app.register_blueprint(auth_blueprint)
 app.register_blueprint(user_blueprint)
 app.register_blueprint(post_blueprint)
+app.register_blueprint(vitals_blueprint)
 app.register_blueprint(report_blueprint)
 app.register_blueprint(analysis_blueprint)
 app.register_blueprint(insurance_blueprint)

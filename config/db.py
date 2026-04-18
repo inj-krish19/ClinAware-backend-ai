@@ -47,3 +47,6 @@ Post = db.collection('post')
 # Storing Prediction History of Medical Insurance
 Insurance = db.collection('insurance')
 
+# Storing Prediction History of Vitals Intelligence
+Vitals = db.collection('vitals')
+
