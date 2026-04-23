@@ -50,3 +50,5 @@ Insurance = db.collection('insurance')
 # Storing Prediction History of Vitals Intelligence
 Vitals = db.collection('vitals')
 
+# Storing Reports of Repots Intelligence
+Reports = db.collection('reports')
