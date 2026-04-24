@@ -5,8 +5,6 @@ from config.db import Reports, User
 from config.token import validate_token, verify_token
 from datetime import datetime
 from dotenv import load_dotenv
-from google import genai
-from google.genai import types
 
 # Load Environment Variables
 load_dotenv()
@@ -15,7 +13,6 @@ app = Blueprint('report_ai', __name__, url_prefix='/report-ai')
 
 # Initialize Gemini Client
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 # Medical Analysis System Instruction
 SYSTEM_PROMPT = """
@@ -51,24 +48,55 @@ def process_medical_report():
     file_bytes = file.read()
 
     try:
-        # 3. Call Gemini 2.5 Flash-Lite
-        response = client.models.generate_content(
-            model="gemini-2.5-flash-lite", # Updated model name
-            config=types.GenerateContentConfig(
-                system_instruction=SYSTEM_PROMPT,
-                response_mime_type="application/json"
-            ),
-            contents=[
-                types.Part.from_bytes(data=file_bytes, mime_type=mime_type),
-                "Extract structured clinical data from this document."
-            ]
+        url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent"
+
+        headers = {
+            "Content-Type": "application/json"
+        }
+
+        # Convert file to base64
+        file_base64 = base64.b64encode(file_bytes).decode("utf-8")
+
+        payload = {
+            "contents": [
+                {
+                    "parts": [
+                        {
+                            "inline_data": {
+                                "mime_type": mime_type,
+                                "data": file_base64
+                            }
+                        },
+                        {
+                            "text": "Extract structured clinical data from this document."
+                        }
+                    ]
+                }
+            ],
+            "systemInstruction": {
+                "parts": [
+                    {
+                        "text": SYSTEM_PROMPT
+                    }
+                ]
+            },
+            "generationConfig": {
+                "response_mime_type": "application/json"
+            }
+        }
+
+        response = requests.post(
+            f"{url}?key={GEMINI_API_KEY}",
+            headers=headers,
+            json=payload
         )
 
-        # 4. FIXING THE ERROR: Accessing text correctly
-        # The SDK returns an object. Access text via response.text
-        raw_text = response.text 
-        
-        # Parse string into JSON
+        res_json = response.json()
+
+        # Extract text (same as SDK's response.text)
+        raw_text = res_json['candidates'][0]['content']['parts'][0]['text']
+
+        # Convert to JSON
         analysis = json.loads(raw_text)
 
         # 5. Archive to Firestore
