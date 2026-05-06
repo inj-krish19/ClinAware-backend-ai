@@ -14,6 +14,7 @@ def get_news():
         news['id'] = record.id
         data.append(news)
 
+    data.sort(key=lambda x: x['id'], reverse=True)
     return jsonify({
         "code": 200,
         "status": "OK",
