@@ -1,6 +1,7 @@
 from fpdf import FPDF
 from datetime import datetime
-import io, os, smtplib, base64
+import io, os, csv
+import smtplib, base64, requests
 
 from flask import Blueprint, jsonify, send_file, request
 from email.message import EmailMessage
@@ -20,6 +21,7 @@ SMTP_SERVER = os.getenv("SMTP_SENDER")
 SMTP_PORT = int(os.getenv("SMTP_PORT") or 0)
 SENDER_EMAIL = os.getenv("SENDER_EMAIL")
 SENDER_PASSWORD = os.getenv("SENDER_PASSWORD")
+MAIL_MICROSERVICE_URL = os.getenv("MAIL_MICROSERVICE_URL")
 
 
 
@@ -64,6 +66,46 @@ def send_email_with_pdf(recipient_email, user_name, pdf_content):
     except Exception as e:
         print(f"Email Protocol Error: {e}")
         return False
+    
+
+def generate_csv_data(user_id, vitals_query, insurance_query):
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # 1. Vitals Section
+    writer.writerow(["--- VITAL SIGNS HISTORY ---"])
+    writer.writerow(["Date", "Systolic", "Diastolic", "BP Status", "Glucose", "Diabetes Status"])
+    for doc in vitals_query:
+        v = doc.to_dict()
+        ts = v.get('timestamp').strftime('%Y-%m-%d') if v.get('timestamp') else "N/A"
+        writer.writerow([
+            ts, 
+            v.get('blood_pressure', {}).get('systolic'),
+            v.get('blood_pressure', {}).get('diastolic'),
+            v.get('blood_pressure', {}).get('status'),
+            v.get('diabetes', {}).get('glucose'),
+            v.get('diabetes', {}).get('status')
+        ])
+    
+    writer.writerow([]) # Spacer
+    
+    # 2. Insurance Section
+    writer.writerow(["--- INSURANCE PREDICTIONS ---"])
+    writer.writerow(["BMI", "Income", "Region", "Chronic Condition", "AI Premium (Alpha)", "AI Premium (Beta)"])
+    for doc in insurance_query:
+        ins = doc.to_dict()
+        writer.writerow([
+            ins.get('bmi'),
+            ins.get('income'),
+            ins.get('region'),
+            ins.get('chronic_condition'),
+            ins.get('predictions', {}).get('model'),
+            ins.get('predictions', {}).get('regressor')
+        ])
+        
+    return output.getvalue()
+
+
 
 
 @app.route("/generate")
@@ -336,20 +378,112 @@ def email_report():
             pdf.cell(45, 7, ins.get('chronic_condition', '').capitalize(), 1, ln=True)
 
     # 4. Generate PDF Byte Stream
-    pdf_output = pdf.output()
+    pdf_output = pdf.output() 
 
-    # 5. Send Email and Return Response
-    email_sent = send_email_with_pdf(user_email, user_record.get('name'), pdf_output)
+    # 5. Prepare Data for Microservice
+    # Convert raw bytes → base64 string
+    pdf_b64 = base64.b64encode(pdf_output).decode("utf-8")
 
-    if email_sent:
+    payload = {
+        "email": user_email,
+        "filename": f"ClinAware_{user_record.get('name')}.pdf",
+        "filedata": pdf_b64,
+        "from": "ClinAware Admin",
+    }
+
+    try:
+        # Note: I swapped the logic to return 200 ONLY if microservice returns 200
+        resp = requests.post(f"{MAIL_MICROSERVICE_URL}/send", json=payload, timeout=10)
+
+        print(resp.status_code)
+        if resp.status_code == 200:
+            return jsonify({
+                "code": 200,
+                "status": "Success",
+                "message": f"Mail sent to {user_email}"
+            }), 200
+        else:
+            return jsonify({
+                "code": resp.status_code,
+                "status": "Service Error",
+                "message": "Mailing Microservice rejected the request."
+            }), resp.status_code
+
+    except requests.exceptions.RequestException as e:
+        print(f"Microservice Connection Error: {e}")
         return jsonify({
-            "code": 200,
-            "status": "Success",
-            "message": f"Report successfully generated and sent to {user_email}"
-        }), 200
-    else:
-        return jsonify({
-            "code": 500,
-            "status": "Error",
-            "message": "Report generated but failed to send email. Please check your configuration."
-        }), 500
+            "code": 503,
+            "status": "Relay Error",
+            "message": "Unable to reach the Mailing Microservice."
+        }), 503
+    
+
+
+@app.route("/download-csv")
+def download_csv():
+    authenticated = validate_token(request)
+    if not authenticated:
+        return jsonify({"code": 403, "status": "Forbidden", "message": "Token not found"}), 403
+    
+    token = request.cookies.get("token")
+
+    payload = verify_token(token)
+    if "message" in payload.keys():
+        return jsonify({"code": 403, "status": "Forbidden", "message": "Token expired"}), 403
+    user_id = payload['id']
+    
+    # Fetch Data
+    vitals = Vitals.where(filter=FieldFilter("user_id", "==", user_id)).order_by("timestamp", direction="DESCENDING").get()
+    insurance = Insurance.where(filter=FieldFilter("user", "==", user_id)).get()
+    
+    csv_content = generate_csv_data(user_id, vitals, insurance)
+    
+    return send_file(
+        io.BytesIO(csv_content.encode()),
+        mimetype="text/csv",
+        as_attachment=True,
+        download_name=f"ClinAware_History_{user_id}.csv"
+    )
+
+
+@app.route("/mail-csv")
+def mail_csv():
+    authenticated = validate_token(request)
+    if not authenticated:
+        return jsonify({"code": 403, "status": "Forbidden", "message": "Token not found"}), 403
+    
+    token = request.cookies.get("token")
+
+    payload = verify_token(token)
+    if "message" in payload.keys():
+        return jsonify({"code": 403, "status": "Forbidden", "message": "Token expired"}), 403
+    user_id = payload['id']
+    user_record = User.document(user_id).get().to_dict()
+    user_email = user_record.get('email')
+
+    # Fetch Data
+    vitals = Vitals.where(filter=FieldFilter("user_id", "==", user_id)).order_by("timestamp", direction="DESCENDING").get()
+    insurance = Insurance.where(filter=FieldFilter("user", "==", user_id)).get()
+    
+    # Generate and Encode
+    csv_content = generate_csv_data(user_id, vitals, insurance)
+    csv_b64 = base64.b64encode(csv_content.encode()).decode("utf-8")
+
+    payload = {
+        "email": user_email,
+        "filename": f"ClinAware_Data_{user_record.get('name')}.csv",
+        "filedata": csv_b64,
+        "from": "ClinAware Admin",
+    }
+
+    try:
+        resp = requests.post(f"{MAIL_MICROSERVICE_URL}/send", json=payload, timeout=10)
+        if resp.status_code == 200:
+            return jsonify({
+                "code": 200,
+                "status": "Success",
+                "message": f"CSV History mailed to {user_email}"
+            }), 200
+        return jsonify({"code": 500, "message": "Microservice Error"}), 500
+    except Exception as e:
+        return jsonify({"code": 503, "message": str(e)}), 503
