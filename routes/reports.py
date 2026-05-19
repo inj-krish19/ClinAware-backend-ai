@@ -386,6 +386,8 @@ def email_report():
 
     payload = {
         "email": user_email,
+        "subject": "Your ClinAware Report",
+        "body": "Your Health log detail records",
         "filename": f"ClinAware_{user_record.get('name')}.pdf",
         "filedata": pdf_b64,
         "from": "ClinAware Admin",
@@ -471,6 +473,8 @@ def mail_csv():
 
     payload = {
         "email": user_email,
+        "subject": "Your ClinAware CSV",
+        "body": "Your Insurance and Vitals Intelligenece logs file",
         "filename": f"ClinAware_Data_{user_record.get('name')}.csv",
         "filedata": csv_b64,
         "from": "ClinAware Admin",
